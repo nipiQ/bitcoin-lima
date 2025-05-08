@@ -1,0 +1,90 @@
+# lima.yaml for bitcoin-core VM
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+vmType: "vz"
+mounts:
+  - location: "~"
+    writable: true
+    9p:
+      securityModel: none
+      cache: mmap
+  - location: "/Volumes/Storage/bitcoin"
+    writable: true
+    9p:
+      securityModel: none
+      cache: mmap
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -e
+      set -x
+      sudo apt update
+      sudo apt install -y wget tar neovim openssl
+      VERSION="29.0"
+      wget https://bitcoincore.org/bin/bitcoin-core-${VERSION}/bitcoin-${VERSION}-aarch64-linux-gnu.tar.gz
+      tar -xzf bitcoin-${VERSION}-aarch64-linux-gnu.tar.gz
+      sudo mv bitcoin-${VERSION} /usr/local/bitcoin
+      sudo ln -s /usr/local/bitcoin/bin/bitcoind /usr/local/bin/bitcoind
+      sudo ln -s /usr/local/bitcoin/bin/bitcoin-cli /usr/local/bin/bitcoin-cli
+      sudo mkdir -p /home/user.linux/.bitcoin
+      cat > /home/user.linux/.bitcoin/bitcoin.conf <<EOF
+      datadir=/Volumes/Storage/bitcoin
+      txindex=1
+      rpcbind=127.0.0.1
+      rpcport=8332
+      rpcallowip=127.0.0.1
+      server=1
+      rpcuser=bitcoinuser
+      rpcpassword=$(openssl rand -base64 12)
+      EOF
+      sudo chown -R user:user /home/user.linux/.bitcoin
+      sudo chmod -R 755 /home/user.linux/.bitcoin
+      sudo chmod 600 /home/user.linux/.bitcoin/bitcoin.conf
+      # Fix home directory permissions
+      sudo chown -R user:user /home/user.linux
+      sudo chmod 755 /home/user.linux
+      if [ ! -f /home/user.linux/.bashrc ]; then
+        echo '# User-specific environment and startup programs' > /home/user.linux/.bashrc
+        echo 'export PATH=$PATH:/usr/local/bin' >> /home/user.linux/.bashrc
+        sudo chown user:user /home/user.linux/.bashrc
+        sudo chmod 644 /home/user.linux/.bashrc
+      fi
+      sudo chown -R user:user /Volumes/Storage/bitcoin || echo "Warning: Failed to chown /Volumes/Storage/bitcoin"
+      sudo chmod -R 755 /Volumes/Storage/bitcoin || echo "Warning: Failed to chmod /Volumes/Storage/bitcoin"
+      if ! mount | grep -q /Volumes/Storage/bitcoin; then
+        echo "Error: /Volumes/Storage/bitcoin not mounted" >&2
+        exit 1
+      fi
+      cat > /etc/systemd/system/bitcoind.service <<EOF
+      [Unit]
+      Description=Bitcoin daemon
+      After=network.target
+      [Service]
+      User=user
+      Group=user
+      ExecStart=/usr/local/bin/bitcoind -conf=/home/user.linux/.bitcoin/bitcoin.conf
+      Restart=always
+      TimeoutStopSec=60s
+      TimeoutStartSec=60s
+      RestartSec=5
+      [Install]
+      WantedBy=multi-user.target
+      EOF
+      sudo systemctl daemon-reload
+      sudo systemctl enable bitcoind || { echo "Error: Failed to enable bitcoind service" >&2; exit 1; }
+      sudo systemctl start bitcoind || { echo "Error: Failed to start bitcoind service" >&2; exit 1; }
+  - mode: user
+    script: |
+      #!/bin/bash
+      set -x
+      sleep 5
+      if ! pgrep bitcoind >/dev/null; then
+        echo "Error: bitcoind not running" >&2
+        exit 1
+      fi
+      bitcoin-cli getblockchaininfo
