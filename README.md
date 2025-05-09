@@ -1,11 +1,11 @@
 # Bitcoin Core on macOS with Lima VM
 
-Run a Bitcoin Core full node on macOS (Apple Silicon) using Lima VM.
+This Lima VM template sets up a Bitcoin Core full node on macOS (Apple Silicon). It automates the installation of Bitcoin Core 29.0, verifies the binary's cryptographic signature and checksum for security, generates a random RPC password, and configures the node to run as a systemd service with a dedicated storage path.
 
 ## Prerequisites
 
 - Lima (`brew install lima`)
-- Storage path with ~600GB+ free space (e.g., `/Volumes/Storage`)
+- Storage path with ~600GB+ free space (e.g., `/Volumes/MyDrive`)
 
 ## Setup
 
@@ -18,7 +18,12 @@ Run a Bitcoin Core full node on macOS (Apple Silicon) using Lima VM.
 
 2. Update `bitcoin-core.yaml`:
 
-   - Replace `/Volumes/Storage` with your storage path.
+   - Replace all occurrences of `/Volumes/Storage` with your storage path (e.g., `/Volumes/MyDrive`).
+   - Example macOS command to replace all instances in `bitcoin-core.yaml`:
+     ```bash
+     sed -i '' 's|/Volumes/Storage|/Volumes/MyDrive|g' bitcoin-core.yaml
+     ```
+   - Ensure your storage path exists and has sufficient space.
 
 3. Create and start VM:
 
@@ -28,6 +33,7 @@ Run a Bitcoin Core full node on macOS (Apple Silicon) using Lima VM.
    ```
 
 4. Verify:
+
    ```bash
    limactl shell bitcoin-core
    bitcoin-cli getblockchaininfo
