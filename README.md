@@ -2,8 +2,6 @@
 
 This repository provides Lima VM templates to run a Bitcoin full node on macOS (Apple Silicon) using either Bitcoin Core (v29.0) or Bitcoin Knots (v28.1.knots20250305). Both clients automate installation, verify binary signatures and checksums for security, generate a random RPC password, and configure the node as a systemd service with a dedicated storage path. Bitcoin Knots, a fork of Bitcoin Core, includes additional features like enhanced mempool policies.
 
-⚠️ **Warning**: Due to slow download speeds, I haven’t extensively tested `bitcoin-knots.yaml`. I’ll revisit it when time allows.
-
 ## Prerequisites
 
 - Lima (`brew install lima`)
