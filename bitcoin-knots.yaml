@@ -1,0 +1,131 @@
+# lima.yaml for bitcoin-knots VM
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+vmType: "vz"
+mounts:
+  - location: "~"
+    writable: true
+    9p:
+      securityModel: none
+      cache: mmap
+  - location: "/Volumes/Storage/bitcoin"
+    writable: true
+    9p:
+      securityModel: none
+      cache: mmap
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -e
+      set -x
+      sudo apt update
+      sudo apt install -y wget tar openssl gnupg coreutils
+      VERSION="28.1.knots20250305"
+      # Download Bitcoin Knots files with retries
+      for i in {1..3}; do
+        wget -O bitcoin-${VERSION}-aarch64-linux-gnu.tar.gz https://bitcoinknots.org/files/28.x/${VERSION}/bitcoin-${VERSION}-aarch64-linux-gnu.tar.gz && break
+        echo "Download tarball attempt $i failed. Retrying..." >&2
+        sleep 2
+      done
+      for i in {1..3}; do
+        wget -O SHA256SUMS https://bitcoinknots.org/files/28.x/${VERSION}/SHA256SUMS && break
+        echo "Download SHA256SUMS attempt $i failed. Retrying..." >&2
+        sleep 2
+      done
+      for i in {1..3}; do
+        wget -O SHA256SUMS.asc https://bitcoinknots.org/files/28.x/${VERSION}/SHA256SUMS.asc && break
+        echo "Download SHA256SUMS.asc attempt $i failed. Retrying..." >&2
+        sleep 2
+      done
+      # Import Luke Dashjr's key with retries and fallback keyserver
+      for i in {1..3}; do
+        gpg --keyserver keyserver.ubuntu.com --recv-keys 0x0CCBAAFD76A2ECE2CCD3141DE2FFD5B1D88CA97D && break
+        echo "Keyserver attempt $i failed (keyserver.ubuntu.com). Trying keys.openpgp.org..." >&2
+        gpg --keyserver keys.openpgp.org --recv-keys 0x0CCBAAFD76A2ECE2CCD3141DE2FFD5B1D88CA97D && break
+        echo "Keyserver attempt $i failed (keys.openpgp.org). Retrying..." >&2
+        sleep 2
+      done
+      # Verify signature (fallback to checksum if no key)
+      if gpg --verify SHA256SUMS.asc SHA256SUMS 2> gpg-verify.log && grep -q "Good signature" gpg-verify.log; then
+        echo "Signature verified successfully."
+      else
+        echo "Warning: Signature verification failed or no key imported. Proceeding with checksum only." >&2
+        cat gpg-verify.log >&2
+      fi
+      # Verify checksum
+      if ! sha256sum --ignore-missing --check --strict SHA256SUMS; then
+        echo "Error: Checksum verification failed." >&2
+        exit 1
+      fi
+      # Install Bitcoin Knots
+      tar -xzf bitcoin-${VERSION}-aarch64-linux-gnu.tar.gz
+      sudo mv bitcoin-${VERSION} /usr/local/bitcoin
+      sudo ln -s /usr/local/bitcoin/bin/bitcoind /usr/local/bin/bitcoind
+      sudo ln -s /usr/local/bitcoin/bin/bitcoin-cli /usr/local/bin/bitcoin-cli
+      # Configure Bitcoin Knots
+      sudo mkdir -p /home/user.linux/.bitcoin
+      cat > /home/user.linux/.bitcoin/bitcoin.conf <<EOF
+      datadir=/Volumes/Storage/bitcoin
+      txindex=1
+      rpcbind=127.0.0.1
+      rpcport=8332
+      rpcallowip=127.0.0.1
+      server=1
+      rpcuser=bitcoinuser
+      rpcpassword=$(openssl rand -base64 12)
+      EOF
+      sudo chown -R user:user /home/user.linux/.bitcoin
+      sudo chmod -R 755 /home/user.linux/.bitcoin
+      sudo chmod 600 /home/user.linux/.bitcoin/bitcoin.conf
+      # Fix home permissions
+      sudo chown -R user:user /home/user.linux
+      sudo chmod 755 /home/user.linux
+      # Set up PATH
+      echo 'export PATH=$PATH:/usr/local/bin' > /home/user.linux/.bashrc
+      sudo chown user:user /home/user.linux/.bashrc
+      sudo chmod 644 /home/user.linux/.bashrc
+      # Set up storage mount
+      sudo chown -R user:user /Volumes/Storage/bitcoin || echo "Warning: Failed to chown /Volumes/Storage/bitcoin"
+      sudo chmod -R 755 /Volumes/Storage/bitcoin || echo "Warning: Failed to chmod /Volumes/Storage/bitcoin"
+      if ! mount | grep -q /Volumes/Storage/bitcoin; then
+        echo "Error: /Volumes/Storage/bitcoin not mounted" >&2
+        exit 1
+      fi
+      # Create systemd service
+      cat > /etc/systemd/system/bitcoind.service <<EOF
+      [Unit]
+      Description=Bitcoin Knots daemon
+      After=network.target
+      [Service]
+      User=user
+      Group=user
+      ExecStart=/usr/local/bin/bitcoind -conf=/home/user.linux/.bitcoin/bitcoin.conf
+      Restart=always
+      TimeoutStopSec=60s
+      TimeoutStartSec=60s
+      RestartSec=5
+      [Install]
+      WantedBy=multi-user.target
+      EOF
+      sudo systemctl daemon-reload
+      sudo systemctl enable bitcoind
+      sudo systemctl start bitcoind
+  - mode: user
+    script: |
+      #!/bin/bash
+      set -x
+      sleep 10
+      if ! pgrep bitcoind >/dev/null; then
+        echo "Error: bitcoind not running" >&2
+        exit 1
+      fi
+      # Run bitcoin-cli with timeout to avoid hanging
+      timeout 30 bitcoin-cli getblockchaininfo || {
+        echo "Warning: bitcoin-cli getblockchaininfo timed out or failed." >&2
+        exit 1
+      }

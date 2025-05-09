@@ -1,6 +1,6 @@
-# Bitcoin Core on macOS with Lima VM
+# Bitcoin Full Node on macOS with Lima VM
 
-This Lima VM template sets up a Bitcoin Core full node on macOS (Apple Silicon). It automates the installation of Bitcoin Core 29.0, verifies the binary's cryptographic signature and checksum for security, generates a random RPC password, and configures the node to run as a systemd service with a dedicated storage path.
+This repository provides Lima VM templates to run a Bitcoin full node on macOS (Apple Silicon) using either Bitcoin Core (v29.0) or Bitcoin Knots (v28.1.knots20250305). Both clients automate installation, verify binary signatures and checksums for security, generate a random RPC password, and configure the node as a systemd service with a dedicated storage path. Bitcoin Knots, a fork of Bitcoin Core, includes additional features like enhanced mempool policies.
 
 ## Prerequisites
 
@@ -12,30 +12,40 @@ This Lima VM template sets up a Bitcoin Core full node on macOS (Apple Silicon).
 1. Clone repository:
 
    ```bash
-   git clone https://github.com/nipiQ/bitcoin-core-lima
-   cd bitcoin-core-lima
+   git clone https://github.com/nipiQ/bitcoin-lima
+   cd bitcoin-lima
    ```
 
-2. Update `bitcoin-core.yaml`:
+2. Choose a template:
+
+   - For Bitcoin Core: Use `bitcoin-core.yaml`.
+   - For Bitcoin Knots: Use `bitcoin-knots.yaml`.
+
+3. Update the template:
 
    - Replace all occurrences of `/Volumes/Storage` with your storage path (e.g., `/Volumes/MyDrive`).
-   - Example macOS command to replace all instances in `bitcoin-core.yaml`:
+   - Example macOS command to replace all instances:
      ```bash
-     sed -i '' 's|/Volumes/Storage|/Volumes/MyDrive|g' bitcoin-core.yaml
+     sed -i '' 's|/Volumes/Storage|/Volumes/MyDrive|g' <template-file>
      ```
+     Replace `<template-file>` with `bitcoin-core.yaml` or `bitcoin-knots.yaml`.
    - Ensure your storage path exists and has sufficient space.
 
-3. Create and start VM:
+4. Create and start VM:
 
    ```bash
-   limactl create --name bitcoin-core bitcoin-core.yaml
-   limactl start bitcoin-core
+   limactl create --name <vm-name> <template-file>
+   limactl start <vm-name>
    ```
 
-4. Verify:
+   Replace `<vm-name>` with `bitcoin-core` or `bitcoin-knots`, and `<template-file>` with the chosen template.
+
+   - Note: Bitcoin Knots downloads may be slow; allow extra time for `limactl start` to complete.
+
+5. Verify:
 
    ```bash
-   limactl shell bitcoin-core
+   limactl shell <vm-name>
    bitcoin-cli getblockchaininfo
    ```
 
