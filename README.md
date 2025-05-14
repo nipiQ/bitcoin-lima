@@ -1,6 +1,6 @@
 # Bitcoin Full Node on macOS with Lima VM
 
-This repository provides Lima VM templates to run a Bitcoin full node on macOS (Apple Silicon) using either Bitcoin Core (v29.0) or Bitcoin Knots (v28.1.knots20250305). Both clients automate installation, verify binary signatures and checksums for security, generate a random RPC password, and configure the node as a systemd service with a dedicated storage path. Bitcoin Knots, a fork of Bitcoin Core, includes additional features like enhanced mempool policies.
+This repository provides Lima VM templates to run a Bitcoin full node on macOS (Apple Silicon) using either Bitcoin Core (v29.0), Bitcoin Knots (v28.1.knots20250305), or Bitcoin Core Testnet4. Using Lima VM allows running Bitcoin Core mainnet and testnet4 conflict-free simultaneously, ideal for development environments. All templates automate installation, verify binary signatures and checksums for security, generate a random RPC password, and configure the node as a systemd service with a dedicated storage path. Bitcoin Knots, a fork of Bitcoin Core, includes additional features like enhanced mempool policies. The Testnet4 template supports development and testing on the testnet4 network.
 
 ## Prerequisites
 
@@ -20,6 +20,7 @@ This repository provides Lima VM templates to run a Bitcoin full node on macOS (
 
    - For Bitcoin Core: Use `bitcoin-core.yaml`.
    - For Bitcoin Knots: Use `bitcoin-knots.yaml`.
+   - For Bitcoin Core Testnet4: Use `bitcoin-testnet4.yaml`.
 
 3. Update the template:
 
@@ -28,7 +29,7 @@ This repository provides Lima VM templates to run a Bitcoin full node on macOS (
      ```bash
      sed -i '' 's|/Volumes/Storage|/Volumes/MyDrive|g' <template-file>
      ```
-     Replace `<template-file>` with `bitcoin-core.yaml` or `bitcoin-knots.yaml`.
+     Replace `<template-file>` with `bitcoin-core.yaml`, `bitcoin-knots.yaml`, or `bitcoin-testnet4.yaml`.
    - Ensure your storage path exists and has sufficient space.
 
 4. Create and start VM:
@@ -38,7 +39,7 @@ This repository provides Lima VM templates to run a Bitcoin full node on macOS (
    limactl start <vm-name>
    ```
 
-   Replace `<vm-name>` with `bitcoin-core` or `bitcoin-knots`, and `<template-file>` with the chosen template.
+   Replace `<vm-name>` with `bitcoin-core`, `bitcoin-knots`, or `bitcoin-testnet4`, and `<template-file>` with the chosen template.
 
    - Note: Bitcoin Knots downloads may be slow; allow extra time for `limactl start` to complete.
 
@@ -53,3 +54,7 @@ This repository provides Lima VM templates to run a Bitcoin full node on macOS (
 
 - Run `bitcoin-cli getblockchaininfo` inside the VM to check node status.
 - Ensure storage path is accessible before starting VM.
+
+## Connect
+
+Follow me on X: [@nipiQ](https://x.com/nipiQ).
