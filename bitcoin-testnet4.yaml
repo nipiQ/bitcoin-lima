@@ -1,0 +1,125 @@
+# lima.yaml for bitcoin-core Testnet4 VM
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+vmType: "vz"
+mounts:
+  - location: "~"
+    writable: true
+    9p:
+      securityModel: none
+      cache: mmap
+  - location: "/Volumes/Storage/bitcoin-testnet"
+    writable: true
+    9p:
+      securityModel: none
+      cache: mmap
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -e
+      set -x
+      sudo apt update
+      sudo apt install -y wget tar openssl gnupg coreutils
+      VERSION="29.0"
+
+      # Download Bitcoin Core files
+      wget https://bitcoincore.org/bin/bitcoin-core-${VERSION}/bitcoin-${VERSION}-aarch64-linux-gnu.tar.gz
+      wget https://bitcoincore.org/bin/bitcoin-core-${VERSION}/SHA256SUMS
+      wget https://bitcoincore.org/bin/bitcoin-core-${VERSION}/SHA256SUMS.asc
+
+      # Import keys (fanquake, achow101) with retries
+      for i in {1..3}; do
+        gpg --keyserver keyserver.ubuntu.com --recv-keys 0x0CCBAAFD76A2ECE2CCD3141DE2FFD5B1D88CA97D 0x152812300785C96444D3334D17565732E08E5E41 && break
+        echo "Keyserver attempt $i failed. Retrying..." >&2
+        sleep 2
+      done
+
+      # Verify signature (fallback to checksum if no keys)
+      if gpg --verify SHA256SUMS.asc SHA256SUMS 2> gpg-verify.log && grep -q "Good signature" gpg-verify.log; then
+        echo "Signature verified successfully."
+      else
+        echo "Warning: Signature verification failed or no keys imported. Proceeding with checksum only." >&2
+        cat gpg-verify.log >&2
+      fi
+
+      # Verify checksum
+      if ! sha256sum --ignore-missing --check --strict SHA256SUMS; then
+        echo "Error: Checksum verification failed." >&2
+        exit 1
+      fi
+
+      # Install Bitcoin Core
+      tar -xzf bitcoin-${VERSION}-aarch64-linux-gnu.tar.gz
+      sudo mv bitcoin-${VERSION} /usr/local/bitcoin
+      sudo ln -s /usr/local/bitcoin/bin/bitcoind /usr/local/bin/bitcoind
+      sudo ln -s /usr/local/bitcoin/bin/bitcoin-cli /usr/local/bin/bitcoin-cli
+
+      # Configure Bitcoin Core
+      sudo mkdir -p /home/user.linux/.bitcoin
+      cat > /home/user.linux/.bitcoin/bitcoin.conf <<EOF
+      [testnet4]
+      datadir=/Volumes/Storage/bitcoin-testnet
+      rpcuser=bitcoinuser
+      rpcpassword=$(openssl rand -base64 12)
+      txindex=1
+      server=1
+      rpcport=18443
+      rpcbind=127.0.0.1
+      rpcallowip=127.0.0.1
+      EOF
+
+      sudo chown -R user:user /home/user.linux/.bitcoin
+      sudo chmod -R 755 /home/user.linux/.bitcoin
+      sudo chmod 600 /home/user.linux/.bitcoin/bitcoin.conf
+
+      # Fix home permissions
+      sudo chown -R user:user /home/user.linux
+      sudo chmod 755 /home/user.linux
+
+      # Set up PATH
+      echo 'export PATH=$PATH:/usr/local/bin' > /home/user.linux/.bashrc
+      sudo chown user:user /home/user.linux/.bashrc
+      sudo chmod 644 /home/user.linux/.bashrc
+
+      # Set up storage mount
+      sudo chown -R user:user /Volumes/Storage/bitcoin-testnet || echo "Warning: Failed to chown /Volumes/Storage/bitcoin-testnet"
+      sudo chmod -R 755 /Volumes/Storage/bitcoin-testnet || echo "Warning: Failed to chmod /Volumes/Storage/bitcoin-testnet"
+      if ! mount | grep -q /Volumes/Storage/bitcoin-testnet; then
+        echo "Error: /Volumes/Storage/bitcoin-testnet not mounted" >&2
+        exit 1
+      fi
+
+      # Create systemd service
+      cat > /etc/systemd/system/bitcoind.service <<EOF
+      [Unit]
+      Description=Bitcoin daemon (Testnet4)
+      After=network.target
+      [Service]
+      User=user
+      Group=user
+      ExecStart=/usr/local/bin/bitcoind -chain=testnet4 -conf=/home/user.linux/.bitcoin/bitcoin.conf
+      Restart=always
+      TimeoutStopSec=60s
+      TimeoutStartSec=60s
+      RestartSec=5
+      [Install]
+      WantedBy=multi-user.target
+      EOF
+      sudo systemctl daemon-reload
+      sudo systemctl enable bitcoind
+      sudo systemctl start bitcoind
+  - mode: user
+    script: |
+      #!/bin/bash
+      set -x
+      sleep 5
+      if ! pgrep bitcoind >/dev/null; then
+        echo "Error: bitcoind not running" >&2
+        exit 1
+      fi
+      bitcoin-cli -testnet4 getblockchaininfo
