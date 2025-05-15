@@ -1,4 +1,4 @@
-# lima.yaml for bitcoin-core VM
+# lima.yaml for bitcoin-main VM
 images:
   - location: "https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-arm64.img"
     arch: "aarch64"
@@ -9,7 +9,7 @@ mounts:
     9p:
       securityModel: none
       cache: mmap
-  - location: "/Volumes/Storage/bitcoin"
+  - location: "/Volumes/Storage/bitcoin-main"
     writable: true
     9p:
       securityModel: none
@@ -63,7 +63,7 @@ provision:
       sudo mkdir -p /home/user.linux/.bitcoin
       cat > /home/user.linux/.bitcoin/bitcoin.conf <<EOF
       [main]
-      datadir=/Volumes/Storage/bitcoin
+      datadir=/Volumes/Storage/bitcoin-main
       rpcuser=bitcoinuser
       rpcpassword=$(openssl rand -base64 12)
       txindex=1
@@ -87,10 +87,10 @@ provision:
       sudo chmod 644 /home/user.linux/.bashrc
 
       # Set up storage mount
-      sudo chown -R user:user /Volumes/Storage/bitcoin || echo "Warning: Failed to chown /Volumes/Storage/bitcoin"
-      sudo chmod -R 755 /Volumes/Storage/bitcoin || echo "Warning: Failed to chmod /Volumes/Storage/bitcoin"
-      if ! mount | grep -q /Volumes/Storage/bitcoin; then
-        echo "Error: /Volumes/Storage/bitcoin not mounted" >&2
+      sudo chown -R user:user /Volumes/Storage/bitcoin-main || echo "Warning: Failed to chown /Volumes/Storage/bitcoin-main"
+      sudo chmod -R 755 /Volumes/Storage/bitcoin-main || echo "Warning: Failed to chmod /Volumes/Storage/bitcoin-main"
+      if ! mount | grep -q /Volumes/Storage/bitcoin-main; then
+        echo "Error: /Volumes/Storage/bitcoin-main not mounted" >&2
         exit 1
       fi
 

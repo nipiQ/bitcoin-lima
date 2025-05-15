@@ -1,6 +1,8 @@
 # Bitcoin Development Toolkit for macOS with Lima VMs (Core Nodes, Layer 2, BTCFi)
 
-This repository provides Lima VM templates to run Bitcoin full nodes on macOS (Apple Silicon) using Bitcoin Core (v29.0) for mainnet, testnet3, and testnet4. Each template runs in its own isolated Lima VM, allowing you to operate multiple networks simultaneously without conflicts. All templates automate installation, verify binary signatures and checksums for security, generate a random RPC password, and configure the node as a systemd service with a dedicated storage path. The macOS host never runs any bitcoind instances directly; all nodes run inside their respective Lima VMs for maximum isolation and safety.
+This repository provides Lima VM templates to run Bitcoin full nodes on macOS (Apple Silicon) using Bitcoin Core (v29.0) for mainnet, testnet3, and testnet4. Each template runs in its own isolated Lima VM, allowing you to operate multiple networks simultaneously without conflicts.
+
+All templates automate installation, verify binary signatures and checksums for security, generate a random RPC password, and configure the node as a systemd service with a dedicated storage path. The macOS host never runs any bitcoind instances directly; all nodes run inside their respective Lima VMs for maximum isolation and safety.
 
 ## Prerequisites
 
@@ -19,7 +21,7 @@ This repository provides Lima VM templates to run Bitcoin full nodes on macOS (A
 
 2. Choose a template:
 
-   - For Bitcoin Core mainnet: Use `bitcoin-core.yaml`.
+   - For Bitcoin Core mainnet: Use `bitcoin-main.yaml`.
    - For Bitcoin Core testnet3: Use `bitcoin-testnet3.yaml`.
    - For Bitcoin Core testnet4: Use `bitcoin-testnet4.yaml`.
 
@@ -30,7 +32,7 @@ This repository provides Lima VM templates to run Bitcoin full nodes on macOS (A
      ```bash
      sed -i '' 's|/Volumes/Storage|/Volumes/MyDrive|g' <template-file>
      ```
-     Replace `<template-file>` with `bitcoin-core.yaml`, `bitcoin-testnet3.yaml`, or `bitcoin-testnet4.yaml`.
+     Replace `<template-file>` with `bitcoin-main.yaml`, `bitcoin-testnet3.yaml`, or `bitcoin-testnet4.yaml`.
    - Ensure your storage path exists and has sufficient space.
 
 4. Create and start VM:
@@ -40,7 +42,7 @@ This repository provides Lima VM templates to run Bitcoin full nodes on macOS (A
    limactl start <vm-name>
    ```
 
-   Replace `<vm-name>` with `bitcoin-core`, `bitcoin-testnet3`, or `bitcoin-testnet4`, and `<template-file>` with the chosen template.
+   Replace `<vm-name>` with `bitcoin-main`, `bitcoin-testnet3`, or `bitcoin-testnet4`, and `<template-file>` with the chosen template.
 
 5. Verify:
 
@@ -55,24 +57,32 @@ The macOS host never runs bitcoind directly. Instead, you can use `bitcoin-cli` 
 
 ```ini
 [main]
-rpcuser=bitcoinuser
-rpcpassword=your_mainnet_rpc_password
-rpcconnect=127.0.0.1
+txindex=1
+server=1
 rpcport=8332
+rpcuser=bitcoinuser
+rpcconnect=127.0.0.1
+rpcpassword=strongpassword
 
 [test]
-testnet=1
-rpcuser=bitcoinuser
-rpcpassword=your_testnet3_rpc_password
-rpcconnect=127.0.0.1
+txindex=1
+server=1
 rpcport=18332
+rpcbind=127.0.0.1
+rpcallowip=127.0.0.1
+rpcuser=bitcoinuser
+rpcpassword=strongpassword
+testnet=1
 
 [testnet4]
-testnet=4
+txindex=1
+server=1
+rpcbind=127.0.0.1
+rpcport=18443
+rpcallowip=127.0.0.1
 rpcuser=bitcoinuser
-rpcpassword=your_testnet4_rpc_password
-rpcconnect=127.0.0.1
-rpcport=28332
+rpcpassword=strongpassword
+testnet4=1
 ```
 
 Adjust the `rpcpassword` and `rpcport` values to match those generated in your VM's `bitcoin.conf` files. This setup allows you to use `bitcoin-cli` on your macOS host to connect to any of your running nodes for mainnet, testnet3, or testnet4.
