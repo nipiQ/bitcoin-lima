@@ -63,14 +63,15 @@ provision:
       sudo mkdir -p /home/user.linux/.bitcoin
       cat > /home/user.linux/.bitcoin/bitcoin.conf <<EOF
       [testnet4]
-      datadir=/Volumes/Storage/bitcoin-testnet
+      testnet4=1
+      datadir=/Volumes/Storage/bitcoin-testnet/testnet4
       rpcuser=bitcoinuser
       rpcpassword=$(openssl rand -base64 12)
-      txindex=1
-      server=1
-      rpcport=18443
       rpcbind=127.0.0.1
       rpcallowip=127.0.0.1
+      rpcport=18443
+      server=1
+      txindex=1
       EOF
 
       sudo chown -R user:user /home/user.linux/.bitcoin
@@ -93,6 +94,11 @@ provision:
         echo "Error: /Volumes/Storage/bitcoin-testnet not mounted" >&2
         exit 1
       fi
+
+      # Ensure testnet4 directory exists and has proper permissions
+      sudo mkdir -p /Volumes/Storage/bitcoin-testnet/testnet4
+      sudo chown -R user:user /Volumes/Storage/bitcoin-testnet/testnet4
+      sudo chmod -R 755 /Volumes/Storage/bitcoin-testnet/testnet4
 
       # Create systemd service
       cat > /etc/systemd/system/bitcoind.service <<EOF
