@@ -1,3 +1,6 @@
+<p align="center"><img alt="Bitcoin Lima banner" title="Bitcoin Development Toolkit for macOS with Lima VMs." src="https://raw.githubusercontent.com/nipiQ/.github/main/assets/bitcoin-lima-repo-banner.webp" width="100%">
+</p>
+
 # Bitcoin Development Toolkit for macOS with Lima VMs (Core Nodes, Layer 2, BTCFi)
 
 This repository provides Lima VM templates to run Bitcoin full nodes on macOS (Apple Silicon) using Bitcoin Core (v29.0) for mainnet, testnet3, and testnet4. Each template runs in its own isolated Lima VM, allowing you to operate multiple networks simultaneously without conflicts.
