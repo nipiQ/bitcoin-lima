@@ -3,7 +3,7 @@
 
 # Bitcoin Development Toolkit for macOS with Lima VMs (Core Nodes, Layer 2, BTCFi)
 
-This repository provides Lima VM templates to run Bitcoin full nodes on macOS (Apple Silicon) using Bitcoin Core (v29.0) for mainnet, testnet3, and testnet4. Each template runs in its own isolated Lima VM, allowing you to operate multiple networks simultaneously without conflicts.
+This repository provides Lima VM templates to run Bitcoin full nodes on macOS (Apple Silicon) using Bitcoin Core (v29.0) for mainnet, testnet3, and testnet4, as well as Bitcoin Knots (v28.1.knots20250305) for mainnet only. Each template runs in its own isolated Lima VM, allowing you to operate multiple networks simultaneously without conflicts.
 
 All templates automate installation, verify binary signatures and checksums for security, generate a random RPC password, and configure the node as a systemd service with a dedicated storage path. The macOS host never runs any bitcoind instances directly; all nodes run inside their respective Lima VMs for maximum isolation and safety.
 
@@ -27,6 +27,7 @@ All templates automate installation, verify binary signatures and checksums for 
    - For Bitcoin Core mainnet: Use `bitcoin-main.yaml`.
    - For Bitcoin Core testnet3: Use `bitcoin-testnet3.yaml`.
    - For Bitcoin Core testnet4: Use `bitcoin-testnet4.yaml`.
+   - For Bitcoin Knots mainnet: Use `bitcoin-knots.yaml` (mainnet only).
 
 3. Update the template:
 
@@ -35,7 +36,7 @@ All templates automate installation, verify binary signatures and checksums for 
      ```bash
      sed -i '' 's|/Volumes/Storage|/Volumes/MyDrive|g' <template-file>
      ```
-     Replace `<template-file>` with `bitcoin-main.yaml`, `bitcoin-testnet3.yaml`, or `bitcoin-testnet4.yaml`.
+     Replace `<template-file>` with `bitcoin-main.yaml`, `bitcoin-testnet3.yaml`, `bitcoin-testnet4.yaml`, or `bitcoin-knots.yaml`.
    - Ensure your storage path exists and has sufficient space.
 
 4. Create and start VM:
@@ -45,7 +46,7 @@ All templates automate installation, verify binary signatures and checksums for 
    limactl start <vm-name>
    ```
 
-   Replace `<vm-name>` with `bitcoin-main`, `bitcoin-testnet3`, or `bitcoin-testnet4`, and `<template-file>` with the chosen template.
+   Replace `<vm-name>` with `bitcoin-main`, `bitcoin-testnet3`, `bitcoin-testnet4`, or `bitcoin-knots`, and `<template-file>` with the chosen template.
 
 5. Verify:
 
@@ -54,9 +55,35 @@ All templates automate installation, verify binary signatures and checksums for 
    bitcoin-cli getblockchaininfo
    ```
 
+## Reusing Blockchain Data (Advanced)
+
+> **Note for Bitcoin Knots users**: If you already have a fully synced Bitcoin Core node, you can optionally reuse the blockchain data to avoid downloading it again with Bitcoin Knots.
+
+This is completely optional but can save significant time and bandwidth. **Proceed with caution and always keep blockchains in separate directories**:
+
+1. Create a dedicated directory for Bitcoin Knots:
+   ```bash
+   mkdir -p /Volumes/Storage/bitcoin-knots
+   ```
+
+2. Copy the blockchain data from your Bitcoin Core directory:
+   ```bash
+   cp -r /Volumes/Storage/bitcoin-main/blocks /Volumes/Storage/bitcoin-knots/
+   cp -r /Volumes/Storage/bitcoin-main/chainstate /Volumes/Storage/bitcoin-knots/
+   ```
+   
+3. Delete the index directory to force reindexing (much faster than downloading):
+   ```bash
+   rm -rf /Volumes/Storage/bitcoin-knots/blocks/index
+   ```
+
+4. Start your Bitcoin Knots node normally using the template. It will automatically rebuild the index from the existing blocks.
+
+This approach ensures that Bitcoin Core and Bitcoin Knots each use their own separate directories, avoiding conflicts while still benefiting from reusing the downloaded blockchain data.
+
 ## Example bitcoin.conf for bitcoin-cli and development
 
-The macOS host never runs bitcoind directly. Instead, you can use `bitcoin-cli` (installed via Homebrew) to interact with your nodes running inside the Lima VMs. For development or scripting, you may want a `~/.bitcoin/bitcoin.conf` file on your macOS host to define multiple networks and RPC credentials. Here is an example:
+The macOS host never runs bitcoind directly. Instead, you can use `bitcoin-cli` (installed via Homebrew) to interact with your nodes running inside the Lima VMs. For development or scripting, you may want a `"~/Library/Application Support/Bitcoin/bitcoin.conf"` file on your macOS host to define multiple networks and RPC credentials. Here is an example:
 
 ```ini
 [main]
