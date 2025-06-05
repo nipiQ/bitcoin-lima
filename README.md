@@ -10,7 +10,7 @@ All templates automate installation, verify binary signatures and checksums for 
 ## Prerequisites
 
 - Lima (`brew install lima`)
-- Storage path with ~600GB+ free space (e.g., `/Volumes/MyDrive`)
+- ChainData path with ~600GB+ free space (e.g., `/Volumes/MyDrive`)
 - `bitcoin-cli` installed on macOS host (`brew install bitcoin`)
 
 ## Setup
@@ -31,10 +31,10 @@ All templates automate installation, verify binary signatures and checksums for 
 
 3. Update the template:
 
-   - Replace all occurrences of `/Volumes/Storage` with your storage path (e.g., `/Volumes/MyDrive`).
+   - Replace all occurrences of `/Volumes/ChainData` with your storage path (e.g., `/Volumes/MyDrive`).
    - Example macOS command to replace all instances:
      ```bash
-     sed -i '' 's|/Volumes/Storage|/Volumes/MyDrive|g' <template-file>
+     sed -i '' 's|/Volumes/ChainData|/Volumes/MyDrive|g' <template-file>
      ```
      Replace `<template-file>` with `bitcoin-core.yaml`, `bitcoin-testnet3.yaml`, `bitcoin-testnet4.yaml`, or `bitcoin-knots.yaml`.
    - Ensure your storage path exists and has sufficient space.
