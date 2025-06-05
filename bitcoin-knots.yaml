@@ -9,7 +9,7 @@ mounts:
     9p:
       securityModel: none
       cache: mmap
-  - location: "/Volumes/Storage/bitcoin-knots"
+  - location: "/Volumes/ChainData/bitcoin-knots"
     writable: true
     9p:
       securityModel: none
@@ -63,7 +63,7 @@ provision:
       sudo mkdir -p /home/user.linux/.bitcoin
       cat > /home/user.linux/.bitcoin/bitcoin.conf <<EOF
       [main]
-      datadir=/Volumes/Storage/bitcoin-knots
+      datadir=/Volumes/ChainData/bitcoin-knots
       rpcuser=bitcoinuser
       rpcpassword=$(openssl rand -base64 12)
       txindex=1
@@ -87,10 +87,10 @@ provision:
       sudo chmod 644 /home/user.linux/.bashrc
 
       # Set up storage mount
-      sudo chown -R user:user /Volumes/Storage/bitcoin-knots || echo "Warning: Failed to chown /Volumes/Storage/bitcoin-knots"
-      sudo chmod -R 755 /Volumes/Storage/bitcoin-knots || echo "Warning: Failed to chmod /Volumes/Storage/bitcoin-knots"
-      if ! mount | grep -q /Volumes/Storage/bitcoin-knots; then
-        echo "Error: /Volumes/Storage/bitcoin-knots not mounted" >&2
+      sudo chown -R user:user /Volumes/ChainData/bitcoin-knots || echo "Warning: Failed to chown /Volumes/ChainData/bitcoin-knots"
+      sudo chmod -R 755 /Volumes/ChainData/bitcoin-knots || echo "Warning: Failed to chmod /Volumes/ChainData/bitcoin-knots"
+      if ! mount | grep -q /Volumes/ChainData/bitcoin-knots; then
+        echo "Error: /Volumes/ChainData/bitcoin-knots not mounted" >&2
         exit 1
       fi
 

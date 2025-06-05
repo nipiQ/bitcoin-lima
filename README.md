@@ -1,7 +1,7 @@
 <p align="center"><img alt="Bitcoin Lima banner" title="Bitcoin Development Toolkit for macOS with Lima VMs." src="https://raw.githubusercontent.com/nipiQ/.github/main/assets/bitcoin-lima-repo-banner.webp" width="100%">
 </p>
 
-# Bitcoin Development Toolkit for macOS with Lima VMs (Core Nodes, Layer 2, BTCFi)
+# Bitcoin Development Toolkit for macOS with Lima VMs
 
 This repository provides Lima VM templates to run Bitcoin full nodes on macOS (Apple Silicon) using Bitcoin Core (v29.0) for mainnet, testnet3, and testnet4, as well as Bitcoin Knots (v28.1.knots20250305) for mainnet only. Each template runs in its own isolated Lima VM, allowing you to operate multiple networks simultaneously without conflicts.
 
@@ -24,7 +24,7 @@ All templates automate installation, verify binary signatures and checksums for 
 
 2. Choose a template:
 
-   - For Bitcoin Core mainnet: Use `bitcoin-main.yaml`.
+   - For Bitcoin Core mainnet: Use `bitcoin-core.yaml`.
    - For Bitcoin Core testnet3: Use `bitcoin-testnet3.yaml`.
    - For Bitcoin Core testnet4: Use `bitcoin-testnet4.yaml`.
    - For Bitcoin Knots mainnet: Use `bitcoin-knots.yaml` (mainnet only).
@@ -36,7 +36,7 @@ All templates automate installation, verify binary signatures and checksums for 
      ```bash
      sed -i '' 's|/Volumes/Storage|/Volumes/MyDrive|g' <template-file>
      ```
-     Replace `<template-file>` with `bitcoin-main.yaml`, `bitcoin-testnet3.yaml`, `bitcoin-testnet4.yaml`, or `bitcoin-knots.yaml`.
+     Replace `<template-file>` with `bitcoin-core.yaml`, `bitcoin-testnet3.yaml`, `bitcoin-testnet4.yaml`, or `bitcoin-knots.yaml`.
    - Ensure your storage path exists and has sufficient space.
 
 4. Create and start VM:
@@ -46,7 +46,7 @@ All templates automate installation, verify binary signatures and checksums for 
    limactl start <vm-name>
    ```
 
-   Replace `<vm-name>` with `bitcoin-main`, `bitcoin-testnet3`, `bitcoin-testnet4`, or `bitcoin-knots`, and `<template-file>` with the chosen template.
+   Replace `<vm-name>` with `bitcoin-core`, `bitcoin-testnet3`, `bitcoin-testnet4`, or `bitcoin-knots`, and `<template-file>` with the chosen template.
 
 5. Verify:
 
@@ -63,18 +63,18 @@ This is completely optional but can save significant time and bandwidth. **Proce
 
 1. Create a dedicated directory for Bitcoin Knots:
    ```bash
-   mkdir -p /Volumes/Storage/bitcoin-knots
+   mkdir -p /Volumes/ChainData/bitcoin-knots
    ```
 
 2. Copy the blockchain data from your Bitcoin Core directory:
    ```bash
-   cp -r /Volumes/Storage/bitcoin-main/blocks /Volumes/Storage/bitcoin-knots/
-   cp -r /Volumes/Storage/bitcoin-main/chainstate /Volumes/Storage/bitcoin-knots/
+   cp -r /Volumes/ChainData/bitcoin-core/blocks /Volumes/ChainData/bitcoin-knots/
+   cp -r /Volumes/ChainData/bitcoin-core/chainstate /Volumes/ChainData/bitcoin-knots/
    ```
    
 3. Delete the index directory to force reindexing (much faster than downloading):
    ```bash
-   rm -rf /Volumes/Storage/bitcoin-knots/blocks/index
+   rm -rf /Volumes/ChainData/bitcoin-knots/blocks/index
    ```
 
 4. Start your Bitcoin Knots node normally using the template. It will automatically rebuild the index from the existing blocks.

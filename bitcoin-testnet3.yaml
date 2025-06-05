@@ -9,7 +9,7 @@ mounts:
     9p:
       securityModel: none
       cache: mmap
-  - location: "/Volumes/Storage/bitcoin-testnet"
+  - location: "/Volumes/ChainData/bitcoin-testnet"
     writable: true
     9p:
       securityModel: none
@@ -65,7 +65,7 @@ provision:
       cat > /home/user.linux/.bitcoin/bitcoin.conf <<EOF
       [test]
       testnet=1
-      datadir=/Volumes/Storage/bitcoin-testnet/testnet
+      datadir=/Volumes/ChainData/bitcoin-testnet/testnet
       rpcuser=bitcoinuser
       rpcpassword=$(openssl rand -base64 12)
       rpcbind=127.0.0.1
@@ -89,17 +89,17 @@ provision:
       sudo chmod 644 /home/user.linux/.bashrc
 
       # Set up storage mount
-      sudo chown -R user:user /Volumes/Storage/bitcoin-testnet || echo "Warning: Failed to chown /Volumes/Storage/bitcoin-testnet"
-      sudo chmod -R 755 /Volumes/Storage/bitcoin-testnet || echo "Warning: Failed to chmod /Volumes/Storage/bitcoin-testnet"
-      if ! mount | grep -q /Volumes/Storage/bitcoin-testnet; then
-        echo "Error: /Volumes/Storage/bitcoin-testnet not mounted" >&2
+      sudo chown -R user:user /Volumes/ChainData/bitcoin-testnet || echo "Warning: Failed to chown /Volumes/ChainData/bitcoin-testnet"
+      sudo chmod -R 755 /Volumes/ChainData/bitcoin-testnet || echo "Warning: Failed to chmod /Volumes/ChainData/bitcoin-testnet"
+      if ! mount | grep -q /Volumes/ChainData/bitcoin-testnet; then
+        echo "Error: /Volumes/ChainData/bitcoin-testnet not mounted" >&2
         exit 1
       fi
 
       # Ensure testnet directory exists and has proper permissions
-      sudo mkdir -p /Volumes/Storage/bitcoin-testnet/testnet
-      sudo chown -R user:user /Volumes/Storage/bitcoin-testnet/testnet
-      sudo chmod -R 755 /Volumes/Storage/bitcoin-testnet/testnet
+      sudo mkdir -p /Volumes/ChainData/bitcoin-testnet/testnet
+      sudo chown -R user:user /Volumes/ChainData/bitcoin-testnet/testnet
+      sudo chmod -R 755 /Volumes/ChainData/bitcoin-testnet/testnet
 
       # Create systemd service
       cat > /etc/systemd/system/bitcoind.service <<EOF
